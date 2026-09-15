@@ -1,0 +1,12 @@
+streamforge:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: streamforge
+      password: streamforge
+      dbname: streamforge
+      schema: analytics
+      threads: 4
