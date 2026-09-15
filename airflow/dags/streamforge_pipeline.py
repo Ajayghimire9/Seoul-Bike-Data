@@ -1,12 +1,12 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
-from airflow import DAG
 from airflow.operators.bash import BashOperator
 
+from airflow import DAG
 
 with DAG(
     dag_id="streamforge_bike_pipeline",
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tzinfo=UTC),
     schedule="@daily",
     catchup=False,
     tags=["data-engineering", "bike-demand"],
@@ -26,4 +26,9 @@ with DAG(
         bash_command="cd dbt && dbt build --profiles-dir .",
     )
 
-    ingest_and_validate >> transform >> analytics
+    load_warehouse = BashOperator(
+        task_id="load_warehouse",
+        bash_command="python -m src.streamforge.load",
+    )
+    ingest_and_validate >> load_warehouse >> analytics
+    ingest_and_validate >> transform

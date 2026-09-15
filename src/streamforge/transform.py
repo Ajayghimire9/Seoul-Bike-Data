@@ -3,7 +3,9 @@ import pandas as pd
 
 def build_fact_table(frame: pd.DataFrame) -> pd.DataFrame:
     df = frame.copy()
-    df["timestamp"] = pd.to_datetime(df["Date"], dayfirst=True) + pd.to_timedelta(df["Hour"], unit="h")
+    df["timestamp"] = pd.to_datetime(df["Date"], dayfirst=True) + pd.to_timedelta(
+        df["Hour"], unit="h"
+    )
     df["date"] = df["timestamp"].dt.date.astype(str)
     df["day_of_week"] = df["timestamp"].dt.dayofweek
     df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
@@ -14,10 +16,22 @@ def build_fact_table(frame: pd.DataFrame) -> pd.DataFrame:
     ).astype(str)
     return df.rename(columns={"Rented Bike Count": "rented_bike_count"})[
         [
-            "timestamp", "date", "Hour", "day_of_week", "is_weekend",
-            "rented_bike_count", "Temperature(°C)", "Humidity(%)",
-            "Wind speed (m/s)", "Visibility (10m)", "Rainfall(mm)",
-            "Snowfall (cm)", "Seasons", "Holiday", "Functioning Day", "demand_bucket",
+            "timestamp",
+            "date",
+            "Hour",
+            "day_of_week",
+            "is_weekend",
+            "rented_bike_count",
+            "Temperature(°C)",
+            "Humidity(%)",
+            "Wind speed (m/s)",
+            "Visibility (10m)",
+            "Rainfall(mm)",
+            "Snowfall (cm)",
+            "Seasons",
+            "Holiday",
+            "Functioning Day",
+            "demand_bucket",
         ]
     ].rename(
         columns={

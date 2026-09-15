@@ -1,0 +1,11 @@
+version: 2
+sources:
+  - name: mobility
+    schema: analytics
+    tables:
+      - name: bike_demand
+        columns:
+          - name: timestamp
+            tests: [unique, not_null]
+          - name: rented_bike_count
+            tests: [not_null]

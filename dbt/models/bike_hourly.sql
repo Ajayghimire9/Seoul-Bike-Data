@@ -7,5 +7,5 @@ select
     avg(temperature_c) as avg_temperature_c,
     avg(humidity_pct) as avg_humidity_pct,
     count(*) as observations
-from bike_demand
+from {{ source('mobility', 'bike_demand') }}
 group by 1, 2, 3
