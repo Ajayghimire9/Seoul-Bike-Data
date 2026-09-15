@@ -1,0 +1,8 @@
+name: streamforge
+version: '1.0.0'
+config-version: 2
+profile: streamforge
+model-paths: [models]
+models:
+  streamforge:
+    +materialized: table
