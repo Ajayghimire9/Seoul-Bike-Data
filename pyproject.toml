@@ -1,0 +1,23 @@
+[project]
+name = "streamforge-bike-analytics"
+version = "1.0.0"
+description = "Production-style batch and streaming data platform for urban bike demand analytics"
+requires-python = ">=3.11"
+dependencies = [
+  "pandas>=2.2,<3",
+  "sqlalchemy>=2.0,<3",
+  "psycopg[binary]>=3.2,<4",
+  "pydantic>=2.9,<3",
+  "confluent-kafka>=2.6,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "ruff>=0.8,<1"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
