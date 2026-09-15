@@ -1,47 +1,145 @@
-# Seoul-Bike-Data
-Required to model the demand for shared bikes with the available independent variables. 
-# Bike Rental Prediction
+# StreamForge — Urban Mobility Data Platform
 
-This Python script aims to predict bike rentals for enhancing urban mobility. The prediction of bike counts required at each hour plays a vital role in ensuring a stable supply of rental bikes, thereby reducing waiting times.
+**Production-style data engineering platform for reliable batch + streaming analytics on urban bike-demand data.**
 
-## Introduction
+![CI](https://github.com/Ajayghimire9/Seoul-Bike-Data/actions/workflows/ci.yml/badge.svg)
 
-Rental bikes in urban cities provide enhanced mobility and convenience. The code's primary objective is predicting the required bike count per hour to ensure an adequate and accessible supply of rental bikes.
+## What this project demonstrates
 
-## Data Collection
+StreamForge turns a raw mobility dataset into an engineered analytics platform rather than a single notebook model.
 
-The script utilizes bike rental data from a CSV file ("SeoulBikeData.csv") located in the directory "Data/SeoulBikeData.csv".
+```text
+Raw CSV
+  │
+  ├── validation + contracts
+  ▼
+Python ingestion ───────────────► Kafka topic: bike-demand
+  │                                   │
+  ▼                                   ▼
+Parquet data lake              streaming-ready events
+  │
+  ▼
+Apache Spark transformations
+  │
+  ▼
+PostgreSQL warehouse
+  │
+  ▼
+dbt analytics models
+  │
+  ▼
+Business-ready hourly demand metrics
+```
 
-## Data Preprocessing and Analysis
+## Architecture
 
-The dataset includes features such as temperature, humidity, rainfall, snowfall, wind speed, visibility, solar radiation, dew point temperature, and more. The code preprocesses the data, performs exploratory data analysis (EDA), and analyzes various statistical measures, distributions, correlations, and categorical variables.
+- **Ingestion:** Python + Pandas with explicit source validation
+- **Event streaming:** Apache Kafka producer using JSON events
+- **Storage:** Parquet for analytical files; MinIO is included as an S3-compatible local object-store option
+- **Batch processing:** Apache Spark transformation job
+- **Warehouse:** PostgreSQL with indexed fact-table schema
+- **Analytics engineering:** dbt model for hourly demand aggregates
+- **Orchestration:** Apache Airflow DAG coordinating ingestion → Spark → dbt
+- **Data quality:** deterministic validation and pipeline-level quality contract tests
+- **Local infrastructure:** Docker Compose for PostgreSQL, Kafka and MinIO
+- **Engineering quality:** typed configuration, pytest, Ruff and GitHub Actions CI
 
-## Feature Engineering
+The project deliberately avoids adding technologies that are not represented by working code or deployment configuration.
 
-Feature engineering involves transforming variables, handling outliers, analyzing distributions, and encoding categorical variables to prepare the data for modeling.
+## Data model
 
-## Model Building
+The core fact table is an hourly mobility observation with:
 
-The script builds several regression models, including Linear Regression, Polynomial Regression, Decision Tree Regression, Random Forest Regression, Bagging Regressor, and Stacking Regressor. It evaluates these models based on R-squared scores, Mean Squared Error (MSE), cross-validation accuracy, and standard deviation.
+- event timestamp and calendar attributes
+- rental demand
+- weather measurements
+- season / holiday / operating-day dimensions
+- derived weekend and demand-bucket fields
 
-## Results and Model Comparison
+The dbt layer produces hourly aggregates such as average demand, peak demand, temperature and humidity.
 
-The code presents a comparative analysis of model performance using metrics such as R-squared, MSE, cross-validation accuracy, and standard deviation. The models are ranked based on their performance to determine the most effective model for predicting bike rentals.
+## Repository structure
 
-## File Structure
+```text
+.
+├── Dataset/
+│   └── SeoulBikeData.csv
+├── src/streamforge/
+│   ├── config.py
+│   ├── ingest.py
+│   ├── load.py
+│   ├── pipeline.py
+│   ├── producer.py
+│   ├── quality.py
+│   └── transform.py
+├── spark/jobs/
+│   └── transform_bike_demand.py
+├── dbt/
+│   ├── dbt_project.yml
+│   ├── profiles.yml.example
+│   └── models/bike_hourly.sql
+├── airflow/dags/
+│   └── streamforge_pipeline.py
+├── sql/schema.sql
+├── tests/test_pipeline.py
+├── docker-compose.yml
+├── pyproject.toml
+└── .github/workflows/ci.yml
+```
 
-- `Bike_Rental_Prediction.py`: Python script containing the entire prediction pipeline.
-- `Data/SeoulBikeData.csv`: CSV file containing the bike rental data.
-- `README.md`: This file, providing an overview of the code and usage instructions.
+## Run locally
 
-## Usage
+### 1. Start infrastructure
 
-1. Clone or download this repository.
-2. Run the Python script `Bike_Rental_Prediction.py`.
-3. Ensure the required libraries and dataset are available to execute the code.
+```bash
+docker compose up -d
+```
 
-## Acknowledgments
+### 2. Install the Python package
 
-The code utilizes bike rental data for predictive analysis. Adjustments may be required based on specific datasets or model optimizations.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
-Feel free to modify or extend the code to suit different datasets or enhance predictive accuracy!
+### 3. Run the validated batch pipeline
+
+```bash
+python -m src.streamforge.pipeline
+```
+
+This writes the curated dataset to `artifacts/bike_demand.parquet`.
+
+### 4. Run quality checks
+
+```bash
+ruff check .
+pytest -q
+```
+
+### 5. Publish events to Kafka
+
+The producer accepts dictionaries generated by the curated pipeline:
+
+```python
+from src.streamforge.producer import publish_rows
+
+publish_rows(rows, bootstrap="localhost:9092", topic="bike-demand")
+```
+
+## Orchestration
+
+The Airflow DAG is intentionally small and observable:
+
+1. validate and ingest source data
+2. execute Spark transformation
+3. build dbt analytics models
+
+For a deployed environment, credentials and endpoints should be injected through the orchestrator's secret/config mechanism rather than committed to Git.
+
+## Why this is portfolio-grade
+
+This project demonstrates the core concerns expected from a modern data engineer: reliable ingestion, data contracts, batch processing, streaming interfaces, analytical storage, SQL transformation, orchestration, reproducible local infrastructure and automated quality gates.
+
+It complements the other portfolio projects by focusing on **Data Engineering + Streaming + Cloud Infrastructure**, rather than repeating another ML training pipeline.
